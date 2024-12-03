@@ -4,12 +4,37 @@ import sys
 import time
 import pygame as pg
 
-
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
 NUM_OF_BOMBS = 5  # 爆弾の個数
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+class Score:
+    """
+    スコアを管理するクラス
+    """
+    def __init__(self):
+        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)  # フォントの設定
+        self.color = (0, 0, 255)  # 青色
+        self.score = 0  # スコア初期値
+        self.img = self.font.render(f"スコア: {self.score}", 0, self.color)  # 初期スコアの画像
+        self.rct = self.img.get_rect()
+        self.rct.bottomleft = (100, HEIGHT-50)  # スコア表示位置（左下隅）
+
+    def update(self, screen: pg.Surface):
+        """
+        スコアを更新して画面に描画
+        引数 screen: 描画先の画面Surface
+        """
+        self.img = self.font.render(f"スコア: {self.score}", 0, self.color)  # 更新後のスコアを画像に
+        screen.blit(self.img, self.rct)  # スコアを画面に描画
+
+    def add_score(self, points: int):
+        """
+        スコアを加算する
+        引数 points: 加算するスコア
+        """
+        self.score += points
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     """
@@ -23,7 +48,6 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     if obj_rct.top < 0 or HEIGHT < obj_rct.bottom:
         tate = False
     return yoko, tate
-
 
 class Bird:
     """
@@ -84,7 +108,6 @@ class Bird:
             self.img = __class__.imgs[tuple(sum_mv)]
         screen.blit(self.img, self.rct)
 
-
 class Beam:
     """
     こうかとんが放つビームに関するクラス
@@ -108,7 +131,6 @@ class Beam:
         if check_bound(self.rct) == (True, True):
             self.rct.move_ip(self.vx, self.vy)
             screen.blit(self.img, self.rct)    
-
 
 class Bomb:
     """
@@ -140,12 +162,12 @@ class Bomb:
         self.rct.move_ip(self.vx, self.vy)
         screen.blit(self.img, self.rct)
 
-
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
+    score = Score()  # スコア管理インスタンスを生成
     bomb = Bomb((255, 0, 0), 10)
     beam = None  # Beam(bird)  # ビームインスタンス生成
     # bomb2 = Bomb((0, 0, 255), 20)   
@@ -178,6 +200,7 @@ def main():
                     beam = None
                     bombs[i] = None
                     bird.change_img(6, screen)
+                    score.add_score(1)  # スコアを1点加算
                     pg.display.update()
 
         key_lst = pg.key.get_pressed()
@@ -189,10 +212,10 @@ def main():
         if beam is not None:
             beam.update(screen)
         # bomb2.update(screen)
+        score.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
-
 
 if __name__ == "__main__":
     pg.init()
