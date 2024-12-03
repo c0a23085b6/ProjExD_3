@@ -168,24 +168,24 @@ def main():
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
     score = Score()  # スコア管理インスタンスを生成
-    bomb = Bomb((255, 0, 0), 10)
-    beam = None  # Beam(bird)  # ビームインスタンス生成
-    # bomb2 = Bomb((0, 0, 255), 20)   
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)] 
+    beams = []  # ビームを管理するリスト
     clock = pg.time.Clock()
-    tmr = 0
+
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                # スペースキー押下でBeamクラスのインスタンス生成
-                beam = Beam(bird)            
+                # スペースキー押下でBeamインスタンスを生成し、リストに追加
+                beams.append(Beam(bird))            
+
         screen.blit(bg_img, [0, 0])
-        
+
+        # こうかとんと爆弾の衝突判定
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
-                # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
+                # ゲームオーバー時の処理
                 bird.change_img(8, screen)
                 fonto = pg.font.Font(None, 80)
                 txt = fonto.render("Game Over", True, (255, 0, 0))
@@ -194,27 +194,34 @@ def main():
                 time.sleep(1)
                 return
 
-        for i, bomb in enumerate(bombs):
-            if beam is not None:
-                if beam.rct.colliderect(bomb.rct):  # ビームが爆弾を撃ち落としたら
-                    beam = None
-                    bombs[i] = None
+        # ビームと爆弾の衝突判定
+        for beam in beams[:]:  # リストコピーで安全にループ
+            for bomb in bombs[:]:
+                if beam.rct.colliderect(bomb.rct):  # 衝突判定
+                    beams.remove(beam)  # 衝突したビームを削除
+                    bombs.remove(bomb)  # 衝突した爆弾を削除
                     bird.change_img(6, screen)
                     score.add_score(1)  # スコアを1点加算
-                    pg.display.update()
+                    break  # 次のビームに進む
 
+        # こうかとんの更新
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        # beam.update(screen)
-        bombs = [bomb for bomb in bombs if bomb is not None]  # Noneでないものリスト
+
+        # 各オブジェクトの更新と描画
         for bomb in bombs:
             bomb.update(screen)
-        if beam is not None:
-            beam.update(screen)
-        # bomb2.update(screen)
+        for beam in beams[:]:
+            if check_bound(beam.rct) == (True, True):
+                beam.update(screen)
+            else:
+                beams.remove(beam)  # 画面外のビームを削除
+
+        # スコアの更新
         score.update(screen)
+
+        # 画面更新
         pg.display.update()
-        tmr += 1
         clock.tick(50)
 
 if __name__ == "__main__":
