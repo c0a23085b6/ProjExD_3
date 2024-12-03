@@ -211,6 +211,7 @@ def main():
         # 各オブジェクトの更新と描画
         for bomb in bombs:
             bomb.update(screen)
+            
         for beam in beams[:]:
             if check_bound(beam.rct) == (True, True):
                 beam.update(screen)
